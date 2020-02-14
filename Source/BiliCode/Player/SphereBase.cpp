@@ -47,50 +47,21 @@ void ASphereBase::BeginPlay()
 	//SphereBeginLocation = SphereMeshComp->GetComponentLocation();//获得初始小球位置
 }
 
-//#define WORLD_DIRECTION//控制小球移动模式
-
 // Called every frame
 void ASphereBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	//GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red,SphereMeshComp->CurrentTag->t);//窗口显示调试信息
 
-#ifdef WORLD_DIRECTION
-	if(AngularVector != FVector(0,0,0))//达到惯性的效果，让AngularVector逐渐减小①
-		SphereMeshComp->SetPhysicsAngularVelocity(AngularVector);//小球向一个向量方向旋转移动
-#else
-	if (!AngularVector.IsZero())//②
+	if (!AngularVector.IsZero())
 	{
 		FVector NewVector = FVector(0, 0, 0);
-		/*NewVector += AngularVector.X  * GetActorForwardVector() * SphereSpeed;
-		NewVector += AngularVector.Y  * GetActorRightVector() * SphereSpeed;*/
+		
 		NewVector += AngularVector.X  * CameraArmComp->GetForwardVector() * SphereSpeed;
 		NewVector += AngularVector.Y  * CameraArmComp->GetRightVector() * SphereSpeed;
-		//test wrong//NewVector += AngularVector.X  * SphereMeshComp->GetForwardVector() * SphereSpeed;//现在Actor变成了根节点，应获得小球的正前方
-					//NewVector += AngularVector.Y  * SphereMeshComp->GetRightVector() * SphereSpeed;
+		
 		SphereMeshComp->SetPhysicsAngularVelocity(NewVector);//小球向一个向量方向旋转移动
 	}
-#endif
-
-	/*
-		if (!AngularVector.IsZero())③
-		{
-			//把移动输入坐标轴的值每秒缩放300个单位
-			AngularVector = AngularVector.GetSafeNormal() * 300.0f;//
-			FVector NewLocation = GetActorLocation();
-			NewLocation += GetActorForwardVector() * AngularVector.X *DeltaTime;
-			NewLocation += GetActorRightVector() * AngularVector.Y *DeltaTime;
-			SetActorLocation(NewLocation);
-		}
-	*/
-
-	
-		/*旋转Actor的偏转，同时旋转附着在Actor上的相机（小球与相机臂是父子关系 ——官方视角旋转，适合父子关系③
-		{
-			FRotator ARotation = GetActorRotation();
-			ARotation.Yaw += CameraInput.X;
-			SetActorRotation(ARotation);
-		}*/
 	
 
 	{//相机臂左右旋转（相机臂与小球是兄弟关系
@@ -99,18 +70,6 @@ void ASphereBase::Tick(float DeltaTime)
 		// *** Root Actor的旋转 会改变 -80 —— 80的角度
 		LRRotation.Yaw += CameraInput.X;
 		CameraArmComp->SetWorldRotation(LRRotation);
-
-#ifdef WORLD_DIRECTION
-#else
-		//FRotator LRSphereRotation = GetActorRotation();
-		////LRSphereRotation.Yaw = FMath::Clamp(LRSphereRotation.Yaw + CameraInput.X, -80.0f, 80.0f);
-		//LRSphereRotation.Yaw += CameraInput.X;
-		//SetActorRotation(LRSphereRotation);//玩家朝视角的正方向②
-#endif
-
-		//test wrong//FRotator LRSphereRotation = SphereMeshComp->GetRelativeTransform().GetRotation().Rotator();
-					//LRSphereRotation.Yaw = FMath::Clamp(LRSphereRotation.Yaw + CameraInput.X, -80.0f, 80.0f);
-					//SphereMeshComp->SetWorldRotation(LRSphereRotation);
 	}
 
 	{//相机臂跟随小球
@@ -196,11 +155,7 @@ void ASphereBase::MoveRight(float AxisValue)
 {
 	if (IsInput)
 	{
-#ifdef WORLD_DIRECTION
-		AngularVector.X = SphereSpeed * AxisValue;//①
-#else
-		AngularVector.X = FMath::Clamp<float>(AxisValue, -1.0f, 1.0f);//②③
-#endif
+		AngularVector.X = FMath::Clamp<float>(AxisValue, -1.0f, 1.0f);
 	}
 }
 
